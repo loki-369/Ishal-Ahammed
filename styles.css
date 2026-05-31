@@ -94,7 +94,7 @@ footer {
 }
 
 .nav-links a {
-  min-width: 72px;
+  min-width: 70px;
   padding: 8px 14px;
   border-radius: 999px;
   color: var(--muted);
@@ -149,13 +149,13 @@ h3 {
 
 h1 {
   max-width: 820px;
-  font-size: clamp(3.2rem, 9vw, 6.8rem);
+  font-size: 5.8rem;
   letter-spacing: 0;
 }
 
 h2 {
   max-width: 740px;
-  font-size: clamp(2.1rem, 5vw, 4.6rem);
+  font-size: 3.6rem;
 }
 
 h3 {
@@ -166,7 +166,7 @@ h3 {
   max-width: 650px;
   margin: 26px 0 0;
   color: var(--muted);
-  font-size: clamp(1rem, 2vw, 1.17rem);
+  font-size: 1.12rem;
 }
 
 .hero-actions {
@@ -248,7 +248,7 @@ pre {
 code {
   color: #f9f4df;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: clamp(0.82rem, 1.8vw, 0.96rem);
+  font-size: 0.92rem;
 }
 
 .strip {
@@ -275,6 +275,7 @@ code {
 
 .strip span,
 .project-card p,
+.about-panel p,
 .skill-list p,
 .contact p,
 footer {
@@ -283,6 +284,43 @@ footer {
 
 .section-heading {
   margin-bottom: 34px;
+}
+
+.about {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: clamp(28px, 6vw, 72px);
+  align-items: start;
+}
+
+.about-panel {
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: 0 14px 42px rgba(23, 23, 23, 0.06);
+}
+
+.about-panel p {
+  margin: 0;
+  font-size: 1.06rem;
+}
+
+.principles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.principles span {
+  padding: 12px 14px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 8px;
+  background: rgba(15, 118, 110, 0.07);
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
 .project-grid {
@@ -337,6 +375,10 @@ footer {
   color: var(--accent-strong);
   font-size: 0.88rem;
   font-weight: 800;
+}
+
+.project-links a::after {
+  content: " ->";
 }
 
 .project-card.featured .project-links a {
@@ -430,6 +472,7 @@ footer {
   }
 
   .hero,
+  .about,
   .split,
   .project-grid {
     grid-template-columns: 1fr;
@@ -446,6 +489,14 @@ footer {
   .project-index {
     margin-bottom: 46px;
   }
+
+  h1 {
+    font-size: 4.1rem;
+  }
+
+  h2 {
+    font-size: 2.8rem;
+  }
 }
 
 @media (max-width: 560px) {
@@ -459,8 +510,8 @@ footer {
   }
 
   .nav-links a {
-    min-width: 64px;
-    padding-inline: 10px;
+    min-width: auto;
+    padding-inline: 9px;
   }
 
   .section {
@@ -476,8 +527,24 @@ footer {
     font-size: 2.72rem;
   }
 
+  h2 {
+    font-size: 2.15rem;
+  }
+
+  .hero-text {
+    font-size: 1rem;
+  }
+
+  code {
+    font-size: 0.82rem;
+  }
+
   .console-card {
     width: 100%;
+  }
+
+  .principles {
+    grid-template-columns: 1fr;
   }
 
   footer {
