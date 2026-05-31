@@ -1,5 +1,6 @@
 const canvas = document.querySelector("#field");
 const ctx = canvas.getContext("2d");
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 let width = 0;
 let height = 0;
@@ -72,6 +73,29 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
+function revealSections() {
+  const sections = document.querySelectorAll(".reveal");
+
+  if (reduceMotion) {
+    sections.forEach((section) => section.classList.add("visible"));
+    return;
+  }
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.16 }
+  );
+
+  sections.forEach((section) => observer.observe(section));
+}
+
 window.addEventListener("resize", resize);
 window.addEventListener("pointermove", (event) => {
   pointer = { x: event.clientX, y: event.clientY, active: true };
@@ -82,3 +106,4 @@ window.addEventListener("pointerleave", () => {
 
 resize();
 draw();
+revealSections();

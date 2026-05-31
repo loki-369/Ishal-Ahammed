@@ -33,6 +33,10 @@ body {
   line-height: 1.6;
 }
 
+body::selection {
+  background: rgba(15, 118, 110, 0.2);
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -175,6 +179,23 @@ h3 {
   margin-top: 34px;
 }
 
+.social-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.social-row a {
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.social-row a:hover {
+  color: var(--accent-strong);
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -203,6 +224,7 @@ h3 {
 
 .button,
 .text-link,
+.social-row a,
 .project-card,
 .nav-links a {
   transition: transform 180ms ease, background 180ms ease, color 180ms ease, border-color 180ms ease;
@@ -445,6 +467,44 @@ footer {
   margin-top: 30px;
 }
 
+.contact-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.contact-cards a {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.68);
+  text-align: left;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.contact-cards a:hover {
+  transform: translateY(-4px);
+  border-color: rgba(15, 118, 110, 0.34);
+  box-shadow: 0 16px 38px rgba(23, 23, 23, 0.08);
+}
+
+.contact-cards span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.contact-cards strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink);
+  font-size: 0.98rem;
+  overflow-wrap: anywhere;
+}
+
 .text-link {
   font-weight: 800;
   color: var(--accent-strong);
@@ -458,6 +518,38 @@ footer {
   padding: 28px 0 36px;
   border-top: 1px solid var(--line);
   font-size: 0.92rem;
+}
+
+.js .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+
+.js .reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .button,
+  .text-link,
+  .social-row a,
+  .project-card,
+  .nav-links a,
+  .contact-cards a,
+  .reveal {
+    transition: none;
+  }
+
+  .js .reveal {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (max-width: 860px) {
@@ -483,6 +575,10 @@ footer {
   }
 
   .strip {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-cards {
     grid-template-columns: 1fr;
   }
 
