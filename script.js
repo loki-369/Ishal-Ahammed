@@ -273,11 +273,13 @@ function initDinoGame() {
     }
   }
 
+  let highScore = parseInt(localStorage.getItem("dino-high-score") || "0", 10);
   const keysPressed = {};
   let horizonX1 = 0;
   let horizonX2 = 600;
   let clouds = [];
   let obstacles = [];
+  let scoreFlashTimer = 0;
 
   const state = {
     active: false,
@@ -309,6 +311,8 @@ function initDinoGame() {
     horizonX2 = 600;
     clouds = [];
     obstacles = [];
+    scoreFlashTimer = 0;
+    game.classList.remove("night");
     statusLabel.textContent = "running";
   }
 
@@ -431,6 +435,8 @@ function initDinoGame() {
     drawSprite("HORIZON", horizonX1, 132, 600, 12);
     drawSprite("HORIZON", horizonX2, 132, 600, 12);
 
+    const printedScore = Math.floor(state.score / 5);
+
     if (state.active && !state.over) {
       // T-Rex physics
       const gravity = state.runner.isDucking ? 1.8 : 0.6;
@@ -459,6 +465,15 @@ function initDinoGame() {
       const newPrintedScore = Math.floor(state.score / 5);
       if (newPrintedScore > 0 && newPrintedScore % 100 === 0 && oldPrintedScore < newPrintedScore) {
         playSound("score");
+        scoreFlashTimer = 120; // Flash score for 2 seconds
+      }
+
+      // Day/Night Cycle inversion toggling every 700 printed points
+      const isNight = Math.floor(newPrintedScore / 700) % 2 === 1;
+      if (isNight) {
+        game.classList.add("night");
+      } else {
+        game.classList.remove("night");
       }
 
       // Gradually increase speed
@@ -467,6 +482,13 @@ function initDinoGame() {
       if (checkCollisions()) {
         state.over = true;
         state.active = false;
+        
+        // Save high score
+        if (newPrintedScore > highScore) {
+          highScore = newPrintedScore;
+          localStorage.setItem("dino-high-score", highScore);
+        }
+
         statusLabel.textContent = "404 hit";
         playSound("hit");
       }
@@ -502,7 +524,21 @@ function initDinoGame() {
     // Draw dinosaur using spritesheet/fallback
     drawSprite(runnerSprite, state.runner.x, state.runner.y, state.runner.w, state.runner.h);
 
-    scoreLabel.textContent = `score ${String(Math.floor(state.score / 5)).padStart(3, "0")}`;
+    // Score display with 100-point flash logic
+    const formattedScore = String(printedScore).padStart(5, "0");
+    const formattedHighScore = String(highScore).padStart(5, "0");
+
+    if (scoreFlashTimer > 0) {
+      scoreFlashTimer--;
+      const showScore = Math.floor(scoreFlashTimer / 15) % 2 === 0;
+      if (showScore) {
+        scoreLabel.textContent = `HI ${formattedHighScore} ${formattedScore}`;
+      } else {
+        scoreLabel.textContent = `HI ${formattedHighScore}      `; // blank out current score
+      }
+    } else {
+      scoreLabel.textContent = `HI ${formattedHighScore} ${formattedScore}`;
+    }
 
     if (!state.active && !state.over) {
       dinoCtx.fillStyle = "rgba(23, 23, 23, 0.48)";

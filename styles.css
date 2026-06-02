@@ -598,6 +598,12 @@ footer {
   border-left: 1px dashed rgba(23, 23, 23, 0.14);
   cursor: pointer;
   outline: none;
+  transition: background-color 1000ms ease, filter 1000ms ease;
+}
+
+.dino-game.night {
+  background-color: #202124;
+  filter: invert(0.9);
 }
 
 .dino-game:focus-visible {
