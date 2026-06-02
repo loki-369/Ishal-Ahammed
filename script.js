@@ -604,6 +604,21 @@ function initDinoGame() {
   drawDino();
 }
 
+function shuffleProjects() {
+  const grid = document.querySelector(".project-grid");
+  if (!grid) return;
+  const cards = Array.from(grid.querySelectorAll(".project-card"));
+  if (cards.length === 0) return;
+
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+
+  grid.innerHTML = "";
+  cards.forEach((card) => grid.appendChild(card));
+}
+
 window.addEventListener("resize", resize);
 window.addEventListener("pointermove", (event) => {
   pointer = { x: event.clientX, y: event.clientY, active: true };
@@ -614,5 +629,6 @@ window.addEventListener("pointerleave", () => {
 
 resize();
 draw();
+shuffleProjects();
 revealSections();
 initDinoGame();
