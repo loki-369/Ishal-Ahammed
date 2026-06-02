@@ -260,12 +260,22 @@ function initDinoGame() {
     }
   }
 
+  const keysPressed = {};
+
   const state = {
     active: false,
     over: false,
     score: 0,
     speed: 3.2,
-    runner: { x: 42, y: 104, size: 24, vy: 0 },
+    runner: {
+      x: 42,
+      y: 85, // resting Y for standard T-Rex (132 - 47)
+      w: 44,
+      h: 47,
+      vy: 0,
+      isJumping: false,
+      isDucking: false
+    },
     obstacle: { x: 640, y: 106, w: 16, h: 28 },
   };
 
@@ -274,32 +284,24 @@ function initDinoGame() {
     state.over = false;
     state.score = 0;
     state.speed = 3.2;
-    state.runner.y = 104;
+    state.runner.y = 85;
     state.runner.vy = 0;
+    state.runner.isJumping = false;
+    state.runner.isDucking = false;
     state.obstacle.x = dinoCanvas.width + 80;
     statusLabel.textContent = "running";
   }
 
-  function jump() {
-    if (!state.active || state.over) {
-      reset();
-      return;
-    }
-
-    if (state.runner.y >= 104) {
-      state.runner.vy = -9.8;
-      playSound("jump");
-    }
-  }
-
   function collides() {
-    const runner = state.runner;
-    const obstacle = state.obstacle;
+    const r = state.runner;
+    const o = state.obstacle;
+    
+    // Exact bounding box collision
     return (
-      runner.x < obstacle.x + obstacle.w &&
-      runner.x + runner.size > obstacle.x &&
-      runner.y < obstacle.y + obstacle.h &&
-      runner.y + runner.size > obstacle.y
+      r.x < o.x + o.w &&
+      r.x + r.w > o.x &&
+      r.y < o.y + o.h &&
+      r.y + r.h > o.y
     );
   }
 
@@ -310,8 +312,26 @@ function initDinoGame() {
     drawSprite("HORIZON", 0, 132, dinoCanvas.width, 12);
 
     if (state.active && !state.over) {
-      state.runner.vy += 0.48;
-      state.runner.y = Math.min(104, state.runner.y + state.runner.vy);
+      // Physics calculations
+      const gravity = state.runner.isDucking ? 1.8 : 0.6;
+      state.runner.vy += gravity;
+
+      // Variable jump height control (hold to jump higher)
+      const isHoldJump = keysPressed["Space"] || keysPressed["ArrowUp"];
+      if (!isHoldJump && state.runner.vy < -3) {
+        state.runner.vy += 0.8; // Cut jump short
+      }
+
+      state.runner.y += state.runner.vy;
+
+      // Landing bounds
+      const restY = state.runner.isDucking ? 102 : 85;
+      if (state.runner.y >= restY) {
+        state.runner.y = restY;
+        state.runner.vy = 0;
+        state.runner.isJumping = false;
+      }
+
       state.obstacle.x -= state.speed;
       
       const oldPrintedScore = Math.floor(state.score / 5);
@@ -337,14 +357,23 @@ function initDinoGame() {
 
     // Determine current dino running frame
     let runnerSprite = "TREX_IDLE";
+    state.runner.w = 44;
+    state.runner.h = 47;
+
     if (state.over) {
       runnerSprite = "TREX_CRASH";
+    } else if (state.runner.isDucking) {
+      state.runner.w = 59;
+      state.runner.h = 30;
+      runnerSprite = Math.floor(state.score / 6) % 2 === 0 ? "TREX_DUCK1" : "TREX_DUCK2";
+    } else if (state.runner.isJumping) {
+      runnerSprite = "TREX_IDLE";
     } else if (state.active) {
       runnerSprite = Math.floor(state.score / 6) % 2 === 0 ? "TREX_RUN1" : "TREX_RUN2";
     }
     
     // Draw dinosaur using spritesheet/fallback
-    drawSprite(runnerSprite, state.runner.x, state.runner.y - 19, 44, 47);
+    drawSprite(runnerSprite, state.runner.x, state.runner.y, state.runner.w, state.runner.h);
 
     // Draw obstacle using spritesheet/fallback
     drawSprite("CACTUS_SMALL", state.obstacle.x, state.obstacle.y, state.obstacle.w, state.obstacle.h);
@@ -360,14 +389,50 @@ function initDinoGame() {
     requestAnimationFrame(drawDino);
   }
 
-  game.addEventListener("click", jump);
-  game.addEventListener("pointerdown", () => game.focus());
+  // Keyboard Event Listeners for jumps & ducking
   window.addEventListener("keydown", (event) => {
     const bounds = game.getBoundingClientRect();
     const gameIsVisible = bounds.top < window.innerHeight && bounds.bottom > 0;
-    if (event.code === "Space" && gameIsVisible) {
+    if (!gameIsVisible) return;
+
+    if (event.code === "Space" || event.code === "ArrowUp") {
       event.preventDefault();
-      jump();
+      keysPressed[event.code] = true;
+      if (!state.active || state.over) {
+        reset();
+      } else if (!state.runner.isJumping) {
+        state.runner.vy = -10;
+        state.runner.isJumping = true;
+        playSound("jump");
+      }
+    }
+    if (event.code === "ArrowDown") {
+      event.preventDefault();
+      keysPressed[event.code] = true;
+      if (state.active && !state.over) {
+        state.runner.isDucking = true;
+      }
+    }
+  });
+
+  window.addEventListener("keyup", (event) => {
+    if (event.code === "Space" || event.code === "ArrowUp" || event.code === "ArrowDown") {
+      keysPressed[event.code] = false;
+      if (event.code === "ArrowDown") {
+        state.runner.isDucking = false;
+      }
+    }
+  });
+
+  // Tap & Click support
+  game.addEventListener("pointerdown", (event) => {
+    game.focus();
+    if (!state.active || state.over) {
+      reset();
+    } else if (!state.runner.isJumping) {
+      state.runner.vy = -10;
+      state.runner.isJumping = true;
+      playSound("jump");
     }
   });
 
