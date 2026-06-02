@@ -616,6 +616,188 @@ function shuffleProjects() {
   cards.forEach((card) => grid.appendChild(card));
 }
 
+function initThemeToggler() {
+  const toggleBtn = document.querySelector("#theme-toggle");
+  if (!toggleBtn) return;
+
+  const savedTheme = localStorage.getItem("portfolio-theme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+    document.body.classList.add("dark");
+  } else {
+    document.body.classList.remove("dark");
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    const isDark = document.body.classList.contains("dark");
+    localStorage.setItem("portfolio-theme", isDark ? "dark" : "light");
+  });
+}
+
+function initInteractiveTerminal() {
+  const terminalInput = document.querySelector("#terminal-input");
+  const terminalHistory = document.querySelector("#terminal-history");
+  const heroTerminal = document.querySelector("#hero-terminal");
+
+  if (!terminalInput || !terminalHistory || !heroTerminal) return;
+
+  heroTerminal.addEventListener("click", () => {
+    terminalInput.focus();
+  });
+
+  const commands = {
+    help: () => {
+      return `Available commands:
+  help     - Display this help message.
+  projects - List all 8 builds with details and quick links.
+  skills   - Output technical skills structured as a JSON tree.
+  clear    - Clear console history.
+  dino     - Smooth scroll to the Dino game container.`;
+    },
+    projects: () => {
+      return `Builds catalog:
+1. Fuel Calculator   - User-feedback driven fuel calculator app.
+   Link: <a href="https://fuel-calculator-rust.vercel.app/" target="_blank">Live Project</a> | <a href="https://github.com/loki-369/fuel-calculator" target="_blank">GitHub</a>
+2. InnoFesta Site    - Harry Potter themed Week Event website.
+   Link: <a href="https://innofesta-2026.vercel.app/" target="_blank">Live Project</a> | <a href="https://github.com/loki-369/innofesta-2025/tree/main/pnnofiesta" target="_blank">GitHub</a>
+3. TrueFund          - Transparent donation box web dashboard & APK.
+   Link: <a href="https://truefund.vercel.app/" target="_blank">Live Dashboard</a> | <a href="https://github.com/loki-369/TRUEFUND" target="_blank">GitHub</a>
+4. OrmaPrint         - Web tool to generate printable Polaroid sheets.
+   Link: <a href="https://ormaprint.vercel.app/" target="_blank">Live Project</a> | <a href="https://github.com/loki-369/Polaroid_generator" target="_blank">GitHub</a>
+5. OrmaVault AI      - AI personal digital memory assistant (Flutter).
+   Link: <a href="https://github.com/loki-369/OrmaVault-Ai" target="_blank">GitHub</a>
+6. Unify             - Holistic life management Android app with Gemini AI.
+   Link: <a href="https://github.com/loki-369/Unify-app" target="_blank">GitHub</a>
+7. PowerGuard        - Energy monitoring system (React & React Native).
+   Link: <a href="https://github.com/loki-369/Power-Guard" target="_blank">GitHub</a>
+8. Offline Attendance- room database offline attendance Kotlin Android app.
+   Link: <a href="https://github.com/loki-369/Offline-attendance#offline-attendance-management-app" target="_blank">GitHub</a>`;
+    },
+    skills: () => {
+      return `{
+  "role": "Developer",
+  "frontend": ["HTML", "CSS", "JavaScript", "React", "responsive layouts", "accessibility"],
+  "backend": ["APIs", "Node.js", "databases", "authentication", "clean server logic"],
+  "product": ["problem solving", "UI polish", "debugging", "performance", "deployment"],
+  "frameworks": ["Flutter", "Vite", "Expo", "Room DB", "Firestore", "Gemini API"],
+  "approach": "simple first, useful always"
+}`;
+    },
+    clear: () => {
+      terminalHistory.innerHTML = "";
+      return "";
+    },
+    dino: () => {
+      const dinoSection = document.querySelector(".page-end");
+      if (dinoSection) {
+        dinoSection.scrollIntoView({ behavior: "smooth" });
+        return "Scrolling to Dino game...";
+      }
+      return "Dino game not found on page.";
+    }
+  };
+
+  terminalInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      const cmdRaw = terminalInput.value.trim();
+      terminalInput.value = "";
+
+      if (cmdRaw === "") return;
+
+      const pUser = document.createElement("p");
+      pUser.innerHTML = `<span class="prompt">$</span> ${cmdRaw}`;
+      terminalHistory.appendChild(pUser);
+
+      const cmd = cmdRaw.toLowerCase();
+      let outputText = "";
+
+      if (commands[cmd]) {
+        outputText = commands[cmd]();
+      } else {
+        outputText = `Command not found: '${cmdRaw}'. Type 'help' to see active commands.`;
+      }
+
+      if (outputText !== "") {
+        const pOutput = document.createElement("p");
+        pOutput.className = "terminal-line-output";
+        pOutput.innerHTML = outputText;
+        terminalHistory.appendChild(pOutput);
+      }
+
+      setTimeout(() => {
+        heroTerminal.scrollTop = heroTerminal.scrollHeight;
+      }, 10);
+    }
+  });
+}
+
+function initContactForm() {
+  const form = document.querySelector("#contact-form");
+  const submitBtn = document.querySelector("#form-submit");
+  const btnText = document.querySelector("#btn-text");
+  const feedback = document.querySelector("#form-feedback");
+
+  if (!form || !submitBtn || !btnText || !feedback) return;
+
+  const inputs = form.querySelectorAll("input, textarea");
+
+  inputs.forEach((input) => {
+    input.addEventListener("input", () => {
+      const group = input.closest(".form-group");
+      if (group) group.classList.remove("invalid");
+    });
+  });
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    let isFormValid = true;
+
+    inputs.forEach((input) => {
+      const group = input.closest(".form-group");
+      if (!group) return;
+
+      if (input.required && input.value.trim() === "") {
+        group.classList.add("invalid");
+        isFormValid = false;
+      } else if (input.type === "email") {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(input.value.trim())) {
+          group.classList.add("invalid");
+          isFormValid = false;
+        }
+      }
+    });
+
+    if (!isFormValid) return;
+
+    submitBtn.disabled = true;
+    btnText.innerHTML = 'Sending <span class="btn-spinner"></span>';
+    feedback.className = "form-feedback hidden";
+
+    setTimeout(() => {
+      submitBtn.disabled = false;
+      btnText.innerHTML = "Send Message";
+
+      const submissions = JSON.parse(localStorage.getItem("contact-submissions") || "[]");
+      submissions.push({
+        name: document.getElementById("form-name").value,
+        email: document.getElementById("form-email").value,
+        message: document.getElementById("form-message").value,
+        timestamp: new Date().toISOString()
+      });
+      localStorage.setItem("contact-submissions", JSON.stringify(submissions));
+
+      feedback.className = "form-feedback success";
+      feedback.innerHTML = "Message cached locally in localStorage.";
+
+      form.reset();
+    }, 1500);
+  });
+}
+
 window.addEventListener("resize", resize);
 window.addEventListener("pointermove", (event) => {
   pointer = { x: event.clientX, y: event.clientY, active: true };
@@ -629,3 +811,6 @@ draw();
 shuffleProjects();
 revealSections();
 initDinoGame();
+initThemeToggler();
+initInteractiveTerminal();
+initContactForm();
