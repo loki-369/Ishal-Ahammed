@@ -284,7 +284,7 @@ function initDinoGame() {
     active: false,
     over: false,
     score: 0,
-    speed: 6.0, // Match original Chrome T-Rex starting speed
+    speed: 3.5, // Slow, comfortable starting speed
     runner: {
       x: 42,
       y: 85, // resting Y for standard T-Rex (132 - 47)
@@ -300,7 +300,7 @@ function initDinoGame() {
     state.active = true;
     state.over = false;
     state.score = 0;
-    state.speed = 6.0;
+    state.speed = 3.5;
     state.runner.y = 85;
     state.runner.vy = 0;
     state.runner.isJumping = false;
@@ -475,8 +475,8 @@ function initDinoGame() {
         game.classList.remove("night");
       }
 
-      // Gradually increase speed
-      state.speed = Math.min(13.0, state.speed + 0.0018);
+      // Gradually increase speed extremely slowly
+      state.speed = Math.min(9.5, state.speed + 0.0006);
 
       if (checkCollisions()) {
         state.over = true;
