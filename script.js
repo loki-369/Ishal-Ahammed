@@ -441,10 +441,7 @@ function initDinoGame() {
       const gravity = state.runner.isDucking ? 1.8 : 0.6;
       state.runner.vy += gravity;
 
-      const isHoldJump = keysPressed["Space"] || keysPressed["ArrowUp"];
-      if (!isHoldJump && state.runner.vy < -3) {
-        state.runner.vy += 0.8; // Cut jump short
-      }
+
 
       state.runner.y += state.runner.vy;
 
