@@ -124,6 +124,12 @@ function initDinoGame() {
     TREX_DUCK2: { x: 1171, y: 19, w: 59, h: 30 },
     CACTUS_SMALL: { x: 228, y: 2, w: 17, h: 35 },
     CACTUS_LARGE: { x: 332, y: 2, w: 25, h: 50 },
+    CACTUS_SMALL_1: { x: 228, y: 2, w: 17, h: 35 },
+    CACTUS_SMALL_2: { x: 245, y: 2, w: 34, h: 35 },
+    CACTUS_SMALL_3: { x: 279, y: 2, w: 51, h: 35 },
+    CACTUS_LARGE_1: { x: 332, y: 2, w: 25, h: 50 },
+    CACTUS_LARGE_2: { x: 357, y: 2, w: 50, h: 50 },
+    CACTUS_LARGE_3: { x: 407, y: 2, w: 75, h: 50 },
     PTERODACTYL1: { x: 134, y: 2, w: 46, h: 40 },
     PTERODACTYL2: { x: 180, y: 2, w: 46, h: 40 },
     CLOUD: { x: 86, y: 2, w: 46, h: 14 },
@@ -164,10 +170,17 @@ function initDinoGame() {
       dinoCtx.fillStyle = "#f8f7f2";
       dinoCtx.fillRect(dx + 28, dy - 5, 2, 2);
     } else if (key.startsWith("CACTUS")) {
-      // High-fidelity fallback green cacti shape
+      // High-fidelity fallback green cacti shape (draw 1, 2, or 3 segments depending on key)
       dinoCtx.fillStyle = "#0f766e";
-      dinoCtx.fillRect(dx + w / 3, dy, w / 3, h);
-      dinoCtx.fillRect(dx, dy + h / 3, w, h / 4);
+      const isLarge = key.includes("LARGE");
+      const segments = key.endsWith("3") ? 3 : key.endsWith("2") ? 2 : 1;
+      const singleW = isLarge ? 25 : 17;
+      
+      for (let i = 0; i < segments; i++) {
+        const offset = dx + i * singleW;
+        dinoCtx.fillRect(offset + singleW / 3, dy, singleW / 3, h);
+        dinoCtx.fillRect(offset, dy + h / 3, singleW, h / 4);
+      }
     } else if (key.startsWith("PTERODACTYL")) {
       // Bird shape
       dinoCtx.beginPath();
@@ -261,12 +274,16 @@ function initDinoGame() {
   }
 
   const keysPressed = {};
+  let horizonX1 = 0;
+  let horizonX2 = 600;
+  let clouds = [];
+  let obstacles = [];
 
   const state = {
     active: false,
     over: false,
     score: 0,
-    speed: 3.2,
+    speed: 6.0, // Match original Chrome T-Rex starting speed
     runner: {
       x: 42,
       y: 85, // resting Y for standard T-Rex (132 - 47)
@@ -275,48 +292,150 @@ function initDinoGame() {
       vy: 0,
       isJumping: false,
       isDucking: false
-    },
-    obstacle: { x: 640, y: 106, w: 16, h: 28 },
+    }
   };
 
   function reset() {
     state.active = true;
     state.over = false;
     state.score = 0;
-    state.speed = 3.2;
+    state.speed = 6.0;
     state.runner.y = 85;
     state.runner.vy = 0;
     state.runner.isJumping = false;
     state.runner.isDucking = false;
-    state.obstacle.x = dinoCanvas.width + 80;
+    
+    horizonX1 = 0;
+    horizonX2 = 600;
+    clouds = [];
+    obstacles = [];
     statusLabel.textContent = "running";
   }
 
-  function collides() {
+  function checkCollisions() {
     const r = state.runner;
-    const o = state.obstacle;
-    
-    // Exact bounding box collision
-    return (
-      r.x < o.x + o.w &&
-      r.x + r.w > o.x &&
-      r.y < o.y + o.h &&
-      r.y + r.h > o.y
-    );
+    for (const o of obstacles) {
+      // Slightly padded hitboxes for T-Rex for fairer retro gameplay feel
+      const paddingX = 6;
+      const paddingY = 4;
+      if (
+        r.x + paddingX < o.x + o.w &&
+        r.x + r.w - paddingX > o.x &&
+        r.y + paddingY < o.y + o.h &&
+        r.y + r.h - paddingY > o.y
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function updateClouds() {
+    for (const c of clouds) {
+      c.x -= 0.5; // Slowly scroll clouds
+    }
+    if (clouds.length < 3 && Math.random() < 0.005) {
+      clouds.push({
+        x: dinoCanvas.width + 50,
+        y: 20 + Math.random() * 40
+      });
+    }
+    clouds = clouds.filter(c => c.x > -50);
+  }
+
+  function updateObstacles() {
+    for (const o of obstacles) {
+      o.x -= state.speed;
+      
+      // Animate flying bird wings
+      if (o.type === "bird") {
+        o.animTimer++;
+        if (o.animTimer >= 15) {
+          o.animTimer = 0;
+          o.sprite = o.sprite === "PTERODACTYL1" ? "PTERODACTYL2" : "PTERODACTYL1";
+        }
+      }
+    }
+
+    let canSpawn = true;
+    if (obstacles.length > 0) {
+      const lastO = obstacles[obstacles.length - 1];
+      const minGap = 200 + state.speed * 18 + Math.random() * 150;
+      if (dinoCanvas.width - lastO.x < minGap) {
+        canSpawn = false;
+      }
+    }
+
+    if (canSpawn) {
+      const printedScore = Math.floor(state.score / 5);
+      let type = "cactus";
+      
+      // Birds spawn after 400 points
+      if (printedScore >= 400 && Math.random() < 0.22) {
+        type = "bird";
+      }
+
+      if (type === "cactus") {
+        const isLarge = Math.random() < 0.45;
+        const count = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3 cacti adjacent
+        let spriteKey, w, h, y;
+
+        if (isLarge) {
+          spriteKey = `CACTUS_LARGE_${count}`;
+          w = count === 3 ? 75 : count === 2 ? 50 : 25;
+          h = 50;
+          y = 132 - 50;
+        } else {
+          spriteKey = `CACTUS_SMALL_${count}`;
+          w = count === 3 ? 51 : count === 2 ? 34 : 17;
+          h = 35;
+          y = 132 - 35;
+        }
+
+        obstacles.push({
+          type: "cactus",
+          x: dinoCanvas.width + 50,
+          y: y,
+          w: w,
+          h: h,
+          sprite: spriteKey
+        });
+      } else if (type === "bird") {
+        // Birds can fly at Low (requires jump), Mid (crouch or jump), or High heights
+        const heights = [132 - 40, 132 - 55, 132 - 72];
+        const y = heights[Math.floor(Math.random() * heights.length)];
+        obstacles.push({
+          type: "bird",
+          x: dinoCanvas.width + 50,
+          y: y,
+          w: 46,
+          h: 40,
+          sprite: "PTERODACTYL1",
+          animTimer: 0
+        });
+      }
+    }
+    obstacles = obstacles.filter(o => o.x > -80);
   }
 
   function drawDino() {
     dinoCtx.clearRect(0, 0, dinoCanvas.width, dinoCanvas.height);
     
-    // Draw horizon ground line using sprite
-    drawSprite("HORIZON", 0, 132, dinoCanvas.width, 12);
+    // Draw horizon ground scrolling
+    if (state.active && !state.over) {
+      horizonX1 -= state.speed;
+      horizonX2 -= state.speed;
+      if (horizonX1 <= -600) horizonX1 = horizonX2 + 600;
+      if (horizonX2 <= -600) horizonX2 = horizonX1 + 600;
+    }
+    drawSprite("HORIZON", horizonX1, 132, 600, 12);
+    drawSprite("HORIZON", horizonX2, 132, 600, 12);
 
     if (state.active && !state.over) {
-      // Physics calculations
+      // T-Rex physics
       const gravity = state.runner.isDucking ? 1.8 : 0.6;
       state.runner.vy += gravity;
 
-      // Variable jump height control (hold to jump higher)
       const isHoldJump = keysPressed["Space"] || keysPressed["ArrowUp"];
       if (!isHoldJump && state.runner.vy < -3) {
         state.runner.vy += 0.8; // Cut jump short
@@ -324,7 +443,6 @@ function initDinoGame() {
 
       state.runner.y += state.runner.vy;
 
-      // Landing bounds
       const restY = state.runner.isDucking ? 102 : 85;
       if (state.runner.y >= restY) {
         state.runner.y = restY;
@@ -332,8 +450,10 @@ function initDinoGame() {
         state.runner.isJumping = false;
       }
 
-      state.obstacle.x -= state.speed;
-      
+      // Update background and obstacles
+      updateClouds();
+      updateObstacles();
+
       const oldPrintedScore = Math.floor(state.score / 5);
       state.score += 1;
       const newPrintedScore = Math.floor(state.score / 5);
@@ -341,18 +461,25 @@ function initDinoGame() {
         playSound("score");
       }
 
-      state.speed = Math.min(6.8, state.speed + 0.0015);
+      // Gradually increase speed
+      state.speed = Math.min(13.0, state.speed + 0.0018);
 
-      if (state.obstacle.x < -30) {
-        state.obstacle.x = dinoCanvas.width + 80 + Math.random() * 180;
-      }
-
-      if (collides()) {
+      if (checkCollisions()) {
         state.over = true;
         state.active = false;
         statusLabel.textContent = "404 hit";
         playSound("hit");
       }
+    }
+
+    // Draw Clouds
+    for (const c of clouds) {
+      drawSprite("CLOUD", c.x, c.y, 46, 14);
+    }
+
+    // Draw Obstacles
+    for (const o of obstacles) {
+      drawSprite(o.sprite, o.x, o.y, o.w, o.h);
     }
 
     // Determine current dino running frame
@@ -375,15 +502,18 @@ function initDinoGame() {
     // Draw dinosaur using spritesheet/fallback
     drawSprite(runnerSprite, state.runner.x, state.runner.y, state.runner.w, state.runner.h);
 
-    // Draw obstacle using spritesheet/fallback
-    drawSprite("CACTUS_SMALL", state.obstacle.x, state.obstacle.y, state.obstacle.w, state.obstacle.h);
-
     scoreLabel.textContent = `score ${String(Math.floor(state.score / 5)).padStart(3, "0")}`;
 
     if (!state.active && !state.over) {
       dinoCtx.fillStyle = "rgba(23, 23, 23, 0.48)";
       dinoCtx.font = "12px Consolas, monospace";
       dinoCtx.fillText("space / tap", 270, 82);
+    }
+
+    if (state.over) {
+      // Draw GAME OVER and Replay sprites
+      drawSprite("TEXT_SPRITE", 224, 50, 191, 11);
+      drawSprite("RESTART", 302, 75, 36, 32);
     }
 
     requestAnimationFrame(drawDino);
