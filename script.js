@@ -105,6 +105,97 @@ function initDinoGame() {
   if (!dinoCanvas || !game || !scoreLabel || !statusLabel) return;
 
   const dinoCtx = dinoCanvas.getContext("2d");
+
+  // Chrome Dino Sprite sheet details (1x resolution)
+  const spriteSheet = new Image();
+  spriteSheet.crossOrigin = "anonymous";
+  spriteSheet.src = "https://raw.githubusercontent.com/wayou/t-rex-runner/master/assets/default_100_percent/100-offline-sprite.png";
+  let spriteLoaded = false;
+  spriteSheet.onload = () => {
+    spriteLoaded = true;
+  };
+
+  const spriteCoords = {
+    TREX_IDLE: { x: 848, y: 2, w: 44, h: 47 },
+    TREX_RUN1: { x: 892, y: 2, w: 44, h: 47 },
+    TREX_RUN2: { x: 936, y: 2, w: 44, h: 47 },
+    TREX_CRASH: { x: 980, y: 2, w: 44, h: 47 },
+    TREX_DUCK1: { x: 1112, y: 19, w: 59, h: 30 },
+    TREX_DUCK2: { x: 1171, y: 19, w: 59, h: 30 },
+    CACTUS_SMALL: { x: 228, y: 2, w: 17, h: 35 },
+    CACTUS_LARGE: { x: 332, y: 2, w: 25, h: 50 },
+    PTERODACTYL1: { x: 134, y: 2, w: 46, h: 40 },
+    PTERODACTYL2: { x: 180, y: 2, w: 46, h: 40 },
+    CLOUD: { x: 86, y: 2, w: 46, h: 14 },
+    HORIZON: { x: 2, y: 54, w: 600, h: 12 },
+    TEXT_SPRITE: { x: 655, y: 2, w: 191, h: 11 },
+    RESTART: { x: 2, y: 2, w: 36, h: 32 }
+  };
+
+  function drawSprite(key, dx, dy, dw, dh) {
+    const s = spriteCoords[key];
+    if (!s) return;
+    const w = dw || s.w;
+    const h = dh || s.h;
+
+    if (spriteLoaded) {
+      dinoCtx.drawImage(spriteSheet, s.x, s.y, s.w, s.h, Math.round(dx), Math.round(dy), w, h);
+    } else {
+      drawFallback(key, dx, dy, w, h);
+    }
+  }
+
+  function drawFallback(key, dx, dy, w, h) {
+    dinoCtx.fillStyle = "#171717";
+    if (key.startsWith("TREX")) {
+      // High fidelity vector fallback of T-Rex
+      dinoCtx.beginPath();
+      if (key.includes("DUCK")) {
+        // Crouch/ducking shape
+        dinoCtx.rect(dx, dy + 10, w, h);
+      } else {
+        // Standard dino body shape
+        dinoCtx.rect(dx + 10, dy, w - 10, h - 15);
+        dinoCtx.rect(dx + 25, dy - 8, 15, 12); // head
+        dinoCtx.rect(dx, dy + 20, 10, 10); // tail
+      }
+      dinoCtx.fill();
+      // Eye
+      dinoCtx.fillStyle = "#f8f7f2";
+      dinoCtx.fillRect(dx + 28, dy - 5, 2, 2);
+    } else if (key.startsWith("CACTUS")) {
+      // High-fidelity fallback green cacti shape
+      dinoCtx.fillStyle = "#0f766e";
+      dinoCtx.fillRect(dx + w / 3, dy, w / 3, h);
+      dinoCtx.fillRect(dx, dy + h / 3, w, h / 4);
+    } else if (key.startsWith("PTERODACTYL")) {
+      // Bird shape
+      dinoCtx.beginPath();
+      dinoCtx.moveTo(dx, dy + h / 2);
+      dinoCtx.lineTo(dx + w / 2, dy + (key.includes("1") ? 0 : h));
+      dinoCtx.lineTo(dx + w, dy + h / 2);
+      dinoCtx.stroke();
+    } else if (key === "CLOUD") {
+      dinoCtx.fillStyle = "rgba(23, 23, 23, 0.18)";
+      dinoCtx.fillRect(dx, dy, w, h);
+    } else if (key === "HORIZON") {
+      dinoCtx.strokeStyle = "rgba(23, 23, 23, 0.18)";
+      dinoCtx.beginPath();
+      dinoCtx.moveTo(dx, dy);
+      dinoCtx.lineTo(dx + w, dy);
+      dinoCtx.stroke();
+    } else if (key === "TEXT_SPRITE") {
+      dinoCtx.fillStyle = "#171717";
+      dinoCtx.font = "bold 12px Consolas, monospace";
+      dinoCtx.fillText("G A M E  O V E R", dx, dy + 10);
+    } else if (key === "RESTART") {
+      dinoCtx.fillStyle = "#171717";
+      dinoCtx.beginPath();
+      dinoCtx.arc(dx + w / 2, dy + h / 2, w / 2 - 2, 0, Math.PI * 1.7);
+      dinoCtx.stroke();
+    }
+  }
+
   const state = {
     active: false,
     over: false,
@@ -136,25 +227,6 @@ function initDinoGame() {
     }
   }
 
-  function drawRunner() {
-    const { x, y, size } = state.runner;
-    dinoCtx.fillStyle = "#171717";
-    dinoCtx.fillRect(x, y, size, size);
-    dinoCtx.fillRect(x + size - 4, y - 8, 13, 12);
-    dinoCtx.fillRect(x + 5, y + size, 5, 8);
-    dinoCtx.fillRect(x + 16, y + size, 5, 8);
-    dinoCtx.fillStyle = "#f8f7f2";
-    dinoCtx.fillRect(x + size + 5, y - 4, 3, 3);
-  }
-
-  function drawObstacle() {
-    const { x, y, w, h } = state.obstacle;
-    dinoCtx.fillStyle = "#0f766e";
-    dinoCtx.fillRect(x, y, w, h);
-    dinoCtx.fillRect(x - 6, y + 10, 6, 5);
-    dinoCtx.fillRect(x + w, y + 7, 6, 5);
-  }
-
   function collides() {
     const runner = state.runner;
     const obstacle = state.obstacle;
@@ -168,11 +240,9 @@ function initDinoGame() {
 
   function drawDino() {
     dinoCtx.clearRect(0, 0, dinoCanvas.width, dinoCanvas.height);
-    dinoCtx.strokeStyle = "rgba(23, 23, 23, 0.18)";
-    dinoCtx.beginPath();
-    dinoCtx.moveTo(0, 132);
-    dinoCtx.lineTo(dinoCanvas.width, 132);
-    dinoCtx.stroke();
+    
+    // Draw horizon ground line using sprite
+    drawSprite("HORIZON", 0, 132, dinoCanvas.width, 12);
 
     if (state.active && !state.over) {
       state.runner.vy += 0.48;
@@ -192,8 +262,20 @@ function initDinoGame() {
       }
     }
 
-    drawRunner();
-    drawObstacle();
+    // Determine current dino running frame
+    let runnerSprite = "TREX_IDLE";
+    if (state.over) {
+      runnerSprite = "TREX_CRASH";
+    } else if (state.active) {
+      runnerSprite = Math.floor(state.score / 6) % 2 === 0 ? "TREX_RUN1" : "TREX_RUN2";
+    }
+    
+    // Draw dinosaur using spritesheet/fallback
+    drawSprite(runnerSprite, state.runner.x, state.runner.y - 19, 44, 47);
+
+    // Draw obstacle using spritesheet/fallback
+    drawSprite("CACTUS_SMALL", state.obstacle.x, state.obstacle.y, state.obstacle.w, state.obstacle.h);
+
     scoreLabel.textContent = `score ${String(Math.floor(state.score / 5)).padStart(3, "0")}`;
 
     if (!state.active && !state.over) {
