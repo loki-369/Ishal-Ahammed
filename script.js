@@ -133,7 +133,7 @@ function initDinoGame() {
     PTERODACTYL2: { x: 180, y: 2, w: 46, h: 40 },
     CLOUD: { x: 86, y: 2, w: 46, h: 14 },
     HORIZON: { x: 2, y: 54, w: 600, h: 12 },
-    TEXT_SPRITE: { x: 954, y: 29, w: 191, h: 11 },
+    TEXT_SPRITE: { x: 655, y: 15, w: 191, h: 11 },
     RESTART: { x: 2, y: 2, w: 36, h: 32 }
   };
 
