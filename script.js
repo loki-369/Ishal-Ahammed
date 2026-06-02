@@ -133,7 +133,7 @@ function initDinoGame() {
     PTERODACTYL2: { x: 180, y: 2, w: 46, h: 40 },
     CLOUD: { x: 86, y: 2, w: 46, h: 14 },
     HORIZON: { x: 2, y: 54, w: 600, h: 12 },
-    TEXT_SPRITE: { x: 655, y: 2, w: 191, h: 11 },
+    TEXT_SPRITE: { x: 954, y: 29, w: 191, h: 11 },
     RESTART: { x: 2, y: 2, w: 36, h: 32 }
   };
 
@@ -284,7 +284,7 @@ function initDinoGame() {
     active: false,
     over: false,
     score: 0,
-    speed: 3.5, // Slow, comfortable starting speed
+    speed: 2.8, // Slow, comfortable starting speed
     runner: {
       x: 42,
       y: 85, // resting Y for standard T-Rex (132 - 47)
@@ -300,7 +300,7 @@ function initDinoGame() {
     state.active = true;
     state.over = false;
     state.score = 0;
-    state.speed = 3.5;
+    state.speed = 2.8;
     state.runner.y = 85;
     state.runner.vy = 0;
     state.runner.isJumping = false;
@@ -318,9 +318,9 @@ function initDinoGame() {
   function checkCollisions() {
     const r = state.runner;
     for (const o of obstacles) {
-      // Slightly padded hitboxes for T-Rex for fairer retro gameplay feel
-      const paddingX = 6;
-      const paddingY = 4;
+      // Highly padded hitboxes for T-Rex for fairer, easier gameplay feel
+      const paddingX = 12;
+      const paddingY = 8;
       if (
         r.x + paddingX < o.x + o.w &&
         r.x + r.w - paddingX > o.x &&
@@ -363,7 +363,7 @@ function initDinoGame() {
     let canSpawn = true;
     if (obstacles.length > 0) {
       const lastO = obstacles[obstacles.length - 1];
-      const minGap = 200 + state.speed * 18 + Math.random() * 150;
+      const minGap = 220 + state.speed * 20 + Math.random() * 180;
       if (dinoCanvas.width - lastO.x < minGap) {
         canSpawn = false;
       }
@@ -373,8 +373,8 @@ function initDinoGame() {
       const printedScore = Math.floor(state.score / 5);
       let type = "cactus";
       
-      // Birds spawn after 400 points
-      if (printedScore >= 400 && Math.random() < 0.22) {
+      // Birds spawn after 600 points
+      if (printedScore >= 600 && Math.random() < 0.20) {
         type = "bird";
       }
 
@@ -476,7 +476,7 @@ function initDinoGame() {
       }
 
       // Gradually increase speed extremely slowly
-      state.speed = Math.min(9.5, state.speed + 0.0006);
+      state.speed = Math.min(8.0, state.speed + 0.0002);
 
       if (checkCollisions()) {
         state.over = true;
