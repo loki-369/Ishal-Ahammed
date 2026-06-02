@@ -196,6 +196,70 @@ function initDinoGame() {
     }
   }
 
+  let audioCtx = null;
+
+  function playSound(type) {
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === "jump") {
+        osc.type = "square";
+        osc.frequency.setValueAtTime(170, now);
+        osc.frequency.exponentialRampToValueAtTime(380, now + 0.08);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      } else if (type === "hit") {
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(80, now);
+        osc.frequency.linearRampToValueAtTime(20, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === "score") {
+        osc.type = "square";
+        osc.frequency.setValueAtTime(880, now);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+
+        setTimeout(() => {
+          try {
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            const now2 = audioCtx.currentTime;
+            osc2.type = "square";
+            osc2.frequency.setValueAtTime(880, now2);
+            gain2.gain.setValueAtTime(0.05, now2);
+            gain2.gain.exponentialRampToValueAtTime(0.01, now2 + 0.08);
+            osc2.start(now2);
+            osc2.stop(now2 + 0.08);
+          } catch (err) {}
+        }, 120);
+      }
+    } catch (err) {
+      console.warn("Web Audio API not supported or blocked", err);
+    }
+  }
+
   const state = {
     active: false,
     over: false,
@@ -224,6 +288,7 @@ function initDinoGame() {
 
     if (state.runner.y >= 104) {
       state.runner.vy = -9.8;
+      playSound("jump");
     }
   }
 
@@ -248,7 +313,14 @@ function initDinoGame() {
       state.runner.vy += 0.48;
       state.runner.y = Math.min(104, state.runner.y + state.runner.vy);
       state.obstacle.x -= state.speed;
+      
+      const oldPrintedScore = Math.floor(state.score / 5);
       state.score += 1;
+      const newPrintedScore = Math.floor(state.score / 5);
+      if (newPrintedScore > 0 && newPrintedScore % 100 === 0 && oldPrintedScore < newPrintedScore) {
+        playSound("score");
+      }
+
       state.speed = Math.min(6.8, state.speed + 0.0015);
 
       if (state.obstacle.x < -30) {
@@ -259,6 +331,7 @@ function initDinoGame() {
         state.over = true;
         state.active = false;
         statusLabel.textContent = "404 hit";
+        playSound("hit");
       }
     }
 
