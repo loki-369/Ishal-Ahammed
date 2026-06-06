@@ -86,15 +86,24 @@ a {
 
 .site-header {
   position: sticky;
-  top: 0;
+  top: 16px;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: min(1120px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 18px 0;
-  backdrop-filter: blur(18px);
+  padding: 10px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 8px 32px rgba(23, 23, 23, 0.04);
+}
+
+body.dark .site-header {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
 }
 
 .brand,
@@ -126,10 +135,14 @@ footer {
 
 .nav-links {
   gap: 6px;
-  padding: 6px;
+  padding: 4px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(23, 23, 23, 0.03);
+}
+
+body.dark .nav-links {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .nav-links a {
@@ -140,11 +153,12 @@ footer {
   font-size: 0.92rem;
   font-weight: 700;
   text-align: center;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
 .nav-links a:hover {
   background: var(--ink);
-  color: #fff;
+  color: var(--bg);
 }
 
 .section {
@@ -1012,6 +1026,7 @@ body.dark .theme-toggle .moon-icon {
   .site-header {
     position: static;
     width: min(100% - 24px, 1120px);
+    margin: 16px auto 0;
   }
 
   .brand span:last-child {

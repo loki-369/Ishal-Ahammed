@@ -1,3 +1,6 @@
+// Change this to your email to receive contact submissions
+const CONTACT_EMAIL = "ishalahmed10@gmail.com";
+
 const canvas = document.querySelector("#field");
 const ctx = canvas.getContext("2d");
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -777,24 +780,67 @@ function initContactForm() {
     btnText.innerHTML = 'Sending <span class="btn-spinner"></span>';
     feedback.className = "form-feedback hidden";
 
-    setTimeout(() => {
-      submitBtn.disabled = false;
-      btnText.innerHTML = "Send Message";
+    const nameVal = document.getElementById("form-name").value;
+    const emailVal = document.getElementById("form-email").value;
+    const messageVal = document.getElementById("form-message").value;
 
+    const cacheLocal = () => {
       const submissions = JSON.parse(localStorage.getItem("contact-submissions") || "[]");
       submissions.push({
-        name: document.getElementById("form-name").value,
-        email: document.getElementById("form-email").value,
-        message: document.getElementById("form-message").value,
+        name: nameVal,
+        email: emailVal,
+        message: messageVal,
         timestamp: new Date().toISOString()
       });
       localStorage.setItem("contact-submissions", JSON.stringify(submissions));
+    };
 
-      feedback.className = "form-feedback success";
-      feedback.innerHTML = "Message cached locally in localStorage.";
+    if (!CONTACT_EMAIL || CONTACT_EMAIL === "your-email@example.com") {
+      // Local fallback in demo mode
+      setTimeout(() => {
+        submitBtn.disabled = false;
+        btnText.innerHTML = "Send Message";
+        cacheLocal();
+        feedback.className = "form-feedback success";
+        feedback.innerHTML = "Demo Mode: Message cached in localStorage. (Developer: Replace CONTACT_EMAIL in script.js to receive emails.)";
+        form.reset();
+      }, 1200);
+      return;
+    }
 
-      form.reset();
-    }, 1500);
+    // AJAX Form submission to FormSubmit.co
+    fetch(`https://formsubmit.co/ajax/${CONTACT_EMAIL}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        name: nameVal,
+        email: emailVal,
+        message: messageVal
+      })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Server error");
+        return res.json();
+      })
+      .then(() => {
+        submitBtn.disabled = false;
+        btnText.innerHTML = "Send Message";
+        cacheLocal();
+        feedback.className = "form-feedback success";
+        feedback.innerHTML = "Thank you! Your message has been sent successfully.";
+        form.reset();
+      })
+      .catch(() => {
+        submitBtn.disabled = false;
+        btnText.innerHTML = "Send Message";
+        cacheLocal();
+        feedback.className = "form-feedback success";
+        feedback.innerHTML = "Message cached locally in localStorage (offline fallback).";
+        form.reset();
+      });
   });
 }
 
